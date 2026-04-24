@@ -1,0 +1,31 @@
+---
+# Cross-namespace backendRef permission for HTTPRoutes pointing at the
+# basic-auth-gatekeeper Service from other namespaces.
+#
+# Gateway API v1 requires an explicit ReferenceGrant in the BACKEND's
+# namespace (this trait's `basic-auth-system`) to permit HTTPRoutes in
+# other namespaces from backendRef'ing a Service here.
+#
+# Keep `from[].namespace` in sync with the set of namespaces that host
+# public HTTPRoutes through the gatekeeper. Adding a new vertical = add
+# its namespace here in a new version of this trait (or via an overlay
+# patch).
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: gatekeeper-backend-grant
+  namespace: basic-auth-system
+  labels:
+    app.kubernetes.io/part-of: basic-auth-cluster-trait
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: kagent-system
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: healthcare-demo
+  to:
+    - group: ""
+      kind: Service
+      name: basic-auth-gatekeeper

@@ -204,3 +204,23 @@ spec:
       data:
         auth: '{{ .htpasswd }}'
       type: Opaque
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  labels:
+    app.kubernetes.io/part-of: basic-auth-cluster-trait
+  name: gatekeeper-backend-grant
+  namespace: basic-auth-system
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: kagent-system
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: healthcare-demo
+  to:
+  - group: ""
+    kind: Service
+    name: basic-auth-gatekeeper
