@@ -44,3 +44,11 @@ nginx-unprivileged can't bind <1024, so we listen on 8080 in-container and expos
 ## Why two replicas
 
 Not for HA load. For the demo shape — if one replica crashes during a stage demo, the other serves. Cost is trivial (25m CPU, 32Mi memory each).
+
+## Relevant vault notes (PKM load step — see `[[unpinned vault notes are dormant memory — CLAUDE.md is how you activate them]]`)
+
+- `[[demo-specific routing belongs in its own cluster-trait — never pollute upstream ones]]` — why this trait is separate from kagent/langfuse traits
+- `[[IAP and oauth2-proxy are deferred in the cluster-trait world — basic auth is enough]]` — why basic-auth, not a richer auth layer
+- `[[ConfigSync RootSyncs fight over implicit namespace ownership]]` — why the ReferenceGrant for cross-namespace routes lives HERE (this trait owns `basic-auth-system`), not in `demo-public-routes-cluster-trait`
+- `[[the canonical demo image registry is shraderdm slash agent-demos]]` — registry rules (nginx is upstream though, not from our registry)
+- `[[back to cluster-trait plus app-trait for the demo reel — easy-deploy abandoned]]` — the packaging model this trait fits into
