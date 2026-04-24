@@ -1,0 +1,81 @@
+---
+# The shared basic-auth gatekeeper. One Deployment, one Service. All public
+# HTTPRoutes (healthcare.shrader.cloud, kagent.shrader.cloud, future
+# verticals) backendRef this Service; nginx's server_name matching picks
+# the right upstream.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: basic-auth-gatekeeper
+  namespace: basic-auth-system
+  labels:
+    app.kubernetes.io/name: basic-auth-gatekeeper
+    app.kubernetes.io/part-of: basic-auth-cluster-trait
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: basic-auth-gatekeeper
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: basic-auth-gatekeeper
+    spec:
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.27-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - { name: http,   containerPort: 8080 }
+            - { name: health, containerPort: 8081 }
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: htpasswd
+              mountPath: /etc/nginx/htpasswd
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            httpGet: { path: /healthz, port: health }
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: health }
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests: { cpu: 25m,  memory: 32Mi }
+            limits:   { cpu: 250m, memory: 128Mi }
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 101
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: basic-auth-nginx-config
+        - name: htpasswd
+          secret:
+            secretName: basic-auth-htpasswd
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: basic-auth-gatekeeper
+  namespace: basic-auth-system
+  labels:
+    app.kubernetes.io/name: basic-auth-gatekeeper
+    app.kubernetes.io/part-of: basic-auth-cluster-trait
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: basic-auth-gatekeeper
+  ports:
+    - { name: http, port: 80, targetPort: http }

@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Default overlay — the hostnames baked into the shared nginx ConfigMap in
+# base/configmap.yaml are the current demo reel (healthcare, kagent). When
+# a new public subdomain is added, edit that ConfigMap directly and
+# re-hydrate. Future v0.2 work: lift host→upstream mapping into overlay
+# patches so base/ stays generic.
+
+resources:
+  - ../../base
