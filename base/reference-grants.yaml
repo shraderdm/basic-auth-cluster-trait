@@ -25,6 +25,9 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       namespace: healthcare-demo
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: energy-demo
   to:
     - group: ""
       kind: Service
