@@ -99,6 +99,32 @@ data:
         }
       }
 
+      # demos.shrader.cloud -> demo-dashboard-cluster-trait
+      # Front door for the entire demo reel: card grid + per-demo
+      # warmup/cooldown buttons. Short proxy_read_timeout (30s) since
+      # the dashboard does NOT call any LLM in the request path.
+      server {
+        listen 8080;
+        server_name demos.shrader.cloud;
+
+        auth_basic           "GDC Demo Reel";
+        auth_basic_user_file /etc/nginx/htpasswd/auth;
+
+        location / {
+          proxy_pass http://demo-dashboard.demo-dashboard-system.svc.cluster.local:80;
+          proxy_set_header Host              $host;
+          proxy_set_header X-Real-IP         $remote_addr;
+          proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Host  $host;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade    $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
+          proxy_read_timeout 30s;
+          proxy_send_timeout 30s;
+        }
+      }
+
       # Healthcheck for k8s probes. No auth on /healthz.
       server {
         listen 8081;
@@ -246,6 +272,9 @@ spec:
   - group: gateway.networking.k8s.io
     kind: HTTPRoute
     namespace: energy-demo
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: demo-dashboard-system
   to:
   - group: ""
     kind: Service

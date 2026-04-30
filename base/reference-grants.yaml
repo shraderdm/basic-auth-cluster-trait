@@ -28,6 +28,9 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       namespace: energy-demo
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: demo-dashboard-system
   to:
     - group: ""
       kind: Service
