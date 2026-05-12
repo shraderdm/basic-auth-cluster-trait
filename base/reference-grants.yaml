@@ -31,9 +31,6 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       namespace: demo-dashboard-system
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: seismic-system
   to:
     - group: ""
       kind: Service

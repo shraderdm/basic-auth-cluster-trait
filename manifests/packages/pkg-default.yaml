@@ -75,6 +75,33 @@ data:
         }
       }
 
+      # energy-sandbox.shrader.cloud -> offshore-drilling-app-trait sandbox UI
+      # Parallel review-ui Deployment used to iterate on the redesign without
+      # touching the live energy.shrader.cloud demo. SANDBOX_MODE=true so the
+      # warmup/cooldown widget is hidden; OFFSHORE_DEMO_AUTO_APPROVE=true so
+      # HITL auto-resolves. Same upstream supervisors as the live energy.
+      server {
+        listen 8080;
+        server_name energy-sandbox.shrader.cloud;
+
+        auth_basic           "GDC Offshore Drilling Demo (sandbox)";
+        auth_basic_user_file /etc/nginx/htpasswd/auth;
+
+        location / {
+          proxy_pass http://offshore-review-ui-sandbox.energy-demo.svc.cluster.local:80;
+          proxy_set_header Host              $host;
+          proxy_set_header X-Real-IP         $remote_addr;
+          proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Host  $host;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade    $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
+          proxy_read_timeout 180s;
+          proxy_send_timeout 180s;
+        }
+      }
+
       # kagent.shrader.cloud -> kagent UI in kagent-system
       server {
         listen 8080;
@@ -122,33 +149,6 @@ data:
           proxy_set_header Connection $connection_upgrade;
           proxy_read_timeout 30s;
           proxy_send_timeout 30s;
-        }
-      }
-
-      # seismic.shrader.cloud -> seismic-app-trait
-      # Fork-and-synthesize pattern: parallel specialist MCP tools, Drill-Site
-      # Viability scoring, VSR-at-the-end, Gemini synthesis. Longer timeout
-      # because the workflow includes an LLM call (~10s).
-      server {
-        listen 8080;
-        server_name seismic.shrader.cloud;
-
-        auth_basic           "GDC Seismic Interpretation Demo";
-        auth_basic_user_file /etc/nginx/htpasswd/auth;
-
-        location / {
-          # seismic-system/seismic-review-ui:8080
-          proxy_pass http://seismic-review-ui.seismic-system.svc.cluster.local:8080;
-          proxy_set_header Host              $host;
-          proxy_set_header X-Real-IP         $remote_addr;
-          proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
-          proxy_set_header X-Forwarded-Host  $host;
-          proxy_http_version 1.1;
-          proxy_set_header Upgrade    $http_upgrade;
-          proxy_set_header Connection $connection_upgrade;
-          proxy_read_timeout 180s;
-          proxy_send_timeout 180s;
         }
       }
 
@@ -302,9 +302,6 @@ spec:
   - group: gateway.networking.k8s.io
     kind: HTTPRoute
     namespace: demo-dashboard-system
-  - group: gateway.networking.k8s.io
-    kind: HTTPRoute
-    namespace: seismic-system
   to:
   - group: ""
     kind: Service
