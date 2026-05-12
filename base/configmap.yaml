@@ -139,6 +139,33 @@ data:
         }
       }
 
+      # seismic.shrader.cloud -> seismic-app-trait
+      # Fork-and-synthesize pattern: parallel specialist MCP tools, Drill-Site
+      # Viability scoring, VSR-at-the-end, Gemini synthesis. Longer timeout
+      # because the workflow includes an LLM call (~10s).
+      server {
+        listen 8080;
+        server_name seismic.shrader.cloud;
+
+        auth_basic           "GDC Seismic Interpretation Demo";
+        auth_basic_user_file /etc/nginx/htpasswd/auth;
+
+        location / {
+          # seismic-system/seismic-review-ui:8080
+          proxy_pass http://seismic-review-ui.seismic-system.svc.cluster.local:8080;
+          proxy_set_header Host              $host;
+          proxy_set_header X-Real-IP         $remote_addr;
+          proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Host  $host;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade    $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
+          proxy_read_timeout 180s;
+          proxy_send_timeout 180s;
+        }
+      }
+
       # Healthcheck for k8s probes. No auth on /healthz.
       server {
         listen 8081;
